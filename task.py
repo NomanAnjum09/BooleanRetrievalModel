@@ -438,16 +438,40 @@ def processSimpleQuery(parsed):
             exit()
         else:
             ind = parsed.index('(')
-            if(parsed[ind-1]=='AND'):
+            ind2 = parsed.index(')')
+
+            if(ind!=0 and parsed.index(')')==len(parsed)-1):
                 sub1 = parsed[:ind-1]
                 sub2 = parsed[ind+1:parsed.index(')')]
-                print(AND_Processor(processSimpleQuery(sub1),processSimpleQuery(sub2)))
-                exit()
-            if(parsed[ind-1]=='OR'):
+                if(parsed[ind-1]=='AND'):    
+                    print(AND_Processor(processSimpleQuery(sub1),processSimpleQuery(sub2)))
+                    exit()
+                if(parsed[ind-1]=='OR'):
+                    print(OR_Processor(processSimpleQuery(sub1),processSimpleQuery(sub2)))
+                    exit()
+            elif ind==0 and parsed.index(')')!=len(parsed)-1:
+                sub1 = parsed[ind+1:ind2]
+                sub2 = parsed[ind2+2:]
+                if(parsed[ind2+1]=='AND'):    
+                    print(AND_Processor(processSimpleQuery(sub1),processSimpleQuery(sub2)))
+                    exit()
+                if(parsed[ind2+1]=='OR'):
+                    print(OR_Processor(processSimpleQuery(sub1),processSimpleQuery(sub2)))
+                    exit()
+            else:
                 sub1 = parsed[:ind-1]
-                sub2 = parsed[ind+1:parsed.index(')')]
-                print(OR_Processor(processSimpleQuery(sub1),processSimpleQuery(sub2)))
-                exit()
+                sub2 = parsed[ind+1:ind2]
+                sub3 = parsed[ind2+2:]
+
+                if(parsed[ind-1]=='AND' and parsed[ind2+1]=='AND'):
+                    print(AND_Processor(processSimpleQuery(sub1),AND_Processor(processSimpleQuery(sub2),processSimpleQuery(sub3))))
+                if(parsed[ind-1]=='OR' and parsed[ind2+1]=='OR'):
+                    print(OR_Processor(processSimpleQuery(sub1),OR_Processor(processSimpleQuery(sub2),processSimpleQuery(sub3))))
+                if(parsed[ind-1]=='AND' and parsed[ind2+1]=='OR'):
+                    print(AND_Processor(processSimpleQuery(sub1),OR_Processor(processSimpleQuery(sub2),processSimpleQuery(sub3))))
+                if(parsed[ind-1]=='OR' and parsed[ind2+1]=='AND'):
+                    print(OR_Processor(processSimpleQuery(sub1),AND_Processor(processSimpleQuery(sub2),processSimpleQuery(sub3))))
+
 
 
 

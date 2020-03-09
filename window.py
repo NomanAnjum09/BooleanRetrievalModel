@@ -193,6 +193,9 @@ class Ui_MainWindow(object):
                             w=w+chr(ord(content[j])+32)
                         else:
                             w+=content[j]
+                if w not in ['',' ',"'"]:
+                    Ltoken.append(stemmer.stem(w))
+                    Lposition.append(counter)    
 
 
 
@@ -455,22 +458,62 @@ class Ui_MainWindow(object):
 ######################Query With AND OR NOT processor##################################################
     def processSimpleQuery(self,parsed):
 
-        if(parsed.__contains__('(')):       ##Qury Of Type NOT ( obama AND Clinton)
-            if(parsed[0]=='NOT'):
+        # if(parsed.__contains__('(')):       ##Qury Of Type NOT ( obama AND Clinton)
+        #     if(parsed[0]=='NOT'):
+        #         sub =parsed[parsed.index('(')+1:parsed.index(')')]
+        #         return str(self.NOT_Process(processSimpleQuery(sub)))          #Recursively Resolve Part In Bracket
+        #     else:
+        #         ind = parsed.index('(')     #Query Of type    obama AND (hillary AND/OR clionton)
+        #         if(parsed[ind-1]=='AND'):
+        #             sub1 = parsed[:ind-1]
+        #             sub2 = parsed[ind+1:parsed.index(')')]
+        #             return str(self.AND_Processor(self.processSimpleQuery(sub1),self.processSimpleQuery(sub2))) #Recusrosice Handling
+                    
+        #         if(parsed[ind-1]=='OR'):
+        #             sub1 = parsed[:ind-1]
+        #             sub2 = parsed[ind+1:parsed.index(')')]
+        #             return str(self.OR_Processor(self.processSimpleQuery(sub1),self.processSimpleQuery(sub2)))
+                    
+        if(parsed.__contains__('(')):
+            if(parsed[0]=='NOT'):##Qury Of Type NOT ( obama AND Clinton)
                 sub =parsed[parsed.index('(')+1:parsed.index(')')]
-                return str(self.NOT_Process(processSimpleQuery(sub)))          #Recursively Resolve Part In Bracket
+                return str(self.NOT_Process(self.processSimpleQuery(sub)))#Recursively Resolve Part In Bracket
+            
             else:
-                ind = parsed.index('(')     #Query Of type    obama AND (hillary AND/OR clionton)
-                if(parsed[ind-1]=='AND'):
+                ind = parsed.index('(')
+                ind2 = parsed.index(')')
+
+                if(ind!=0 and parsed.index(')')==len(parsed)-1):#Query Of type    obama AND (hillary AND/OR clionton)
                     sub1 = parsed[:ind-1]
                     sub2 = parsed[ind+1:parsed.index(')')]
-                    return str(self.AND_Processor(self.processSimpleQuery(sub1),self.processSimpleQuery(sub2))) #Recusrosice Handling
+                    if(parsed[ind-1]=='AND'):    
+                        return str(self.AND_Processor(self.processSimpleQuery(sub1),self.processSimpleQuery(sub2)))
                     
-                if(parsed[ind-1]=='OR'):
+                    if(parsed[ind-1]=='OR'):
+                        return str(self.OR_Processor(self.processSimpleQuery(sub1),self.processSimpleQuery(sub2)))
+                    
+                elif ind==0 and parsed.index(')')!=len(parsed)-1: # Query Of TYpe (hillary OR obama) AND Trump
+                    sub1 = parsed[ind+1:ind2]
+                    sub2 = parsed[ind2+2:]
+                    if(parsed[ind2+1]=='AND'):
+                        return str(self.AND_Processor(self.processSimpleQuery(sub1),self.processSimpleQuery(sub2)))
+                    
+                    if(parsed[ind2+1]=='OR'):
+                        return str(self.OR_Processor(self.processSimpleQuery(sub1),self.processSimpleQuery(sub2)))
+                    
+                else:                           #Query Of Type          obama AND (Hillary AND Clinton) OR trump
                     sub1 = parsed[:ind-1]
-                    sub2 = parsed[ind+1:parsed.index(')')]
-                    return str(self.OR_Processor(self.processSimpleQuery(sub1),self.processSimpleQuery(sub2)))
-                    
+                    sub2 = parsed[ind+1:ind2]
+                    sub3 = parsed[ind2+2:]
+
+                    if(parsed[ind-1]=='AND' and parsed[ind2+1]=='AND'):
+                        return str(self.AND_Processor(self.processSimpleQuery(sub1),self.AND_Processor(self.processSimpleQuery(sub2),self.processSimpleQuery(sub3))))
+                    if(parsed[ind-1]=='OR' and parsed[ind2+1]=='OR'):
+                        return str(OR_Processor(self.processSimpleQuery(sub1),self.OR_Processor(self.processSimpleQuery(sub2),self.processSimpleQuery(sub3))))
+                    if(parsed[ind-1]=='AND' and parsed[ind2+1]=='OR'):
+                        return str(self.AND_Processor(self.processSimpleQuery(sub1),self.OR_Processor(self.processSimpleQuery(sub2),self.processSimpleQuery(sub3))))
+                    if(parsed[ind-1]=='OR' and parsed[ind2+1]=='AND'):
+                        return str(self.OR_Processor(self.processSimpleQuery(sub1),self.AND_Processor(self.processSimpleQuery(sub2),self.processSimpleQuery(sub3))))
 
 
 
@@ -568,7 +611,7 @@ class Ui_MainWindow(object):
                     word = ''
             elif query[i]!=' ':
                 word+=query[i]
-        if(word!=''):
+        if(word not in ['',' ']):
             parsed.append(word)
         
         return Qtype,parsed
@@ -659,9 +702,10 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.label.setText(_translate("MainWindow", "Boolean Retrieval Model"))
-        self.label.setStyleSheet("QLabel { background-color : #42cee5; color : #c41b6a; }")
-        self.label_2.setText(_translate("MainWindow", "Enter Query Here"))
+        #self.label.setText(_translate("MainWindow", "B<img src=\"./glass.png\"><img src=\"./glass.png\">lean Retrieval Model"))
+        self.label.setText(_translate("MainWindow", "<img src=\"./title.png\">"))
+        #self.label.setStyleSheet("QLabel { background-color : #42cee5; color : #c41b6a; }")
+        self.label_2.setText(_translate("MainWindow", "<img src=\"./query.png\">"))
         self.radioButton.setText(_translate("MainWindow", "Run from scratch"))
         self.radioButton_2.setText(_translate("MainWindow", "Use Preprocessed Data"))
         self.label_3.setText(_translate("MainWindow", "Results : <img src=\"./emoji.png\">"))
@@ -674,6 +718,7 @@ class Ui_MainWindow(object):
         if self.radioButton_2.isChecked():
             text = self.lineEdit.text()
             Qtype,parsedQuery = self.queryParser(text)
+            print(parsedQuery)
             if(Qtype==1):
                 self.textBrowser.setText(str(self.processSimpleQuery(parsedQuery)))
             else:
