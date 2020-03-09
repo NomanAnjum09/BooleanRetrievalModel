@@ -299,6 +299,7 @@ class Ui_MainWindow(object):
         return result
 
     def OR_Processor(self,list1,list2):
+        
         result = []
         n1 = len(list1)
         n2 = len(list2)
@@ -335,6 +336,7 @@ class Ui_MainWindow(object):
 
 
     def AND_Processor(self,list1,list2):
+       
         n1 = len(list1)
         n2 = len(list2)
         i=0
@@ -473,33 +475,35 @@ class Ui_MainWindow(object):
         #             sub1 = parsed[:ind-1]
         #             sub2 = parsed[ind+1:parsed.index(')')]
         #             return str(self.OR_Processor(self.processSimpleQuery(sub1),self.processSimpleQuery(sub2)))
-                    
+        print(parsed)     
         if(parsed.__contains__('(')):
             if(parsed[0]=='NOT'):##Qury Of Type NOT ( obama AND Clinton)
                 sub =parsed[parsed.index('(')+1:parsed.index(')')]
                 return str(self.NOT_Process(self.processSimpleQuery(sub)))#Recursively Resolve Part In Bracket
-            
+    
             else:
                 ind = parsed.index('(')
                 ind2 = parsed.index(')')
-
-                if(ind!=0 and parsed.index(')')==len(parsed)-1):#Query Of type    obama AND (hillary AND/OR clionton)
+                if(ind==0 and ind2 == len(parsed)-1):           #Parse To Recursively Process Query Of Type => (obama AND clinton) OR (near OR box AND trump) AND (united AND actions OR america)
+                    parsed.pop(len(parsed)-1)
+                    parsed.pop(0)
+                elif(ind!=0 and parsed.index(')')==len(parsed)-1):#Query Of type    obama AND (hillary AND/OR clionton)
                     sub1 = parsed[:ind-1]
                     sub2 = parsed[ind+1:parsed.index(')')]
                     if(parsed[ind-1]=='AND'):    
-                        return str(self.AND_Processor(self.processSimpleQuery(sub1),self.processSimpleQuery(sub2)))
+                        return self.AND_Processor(self.processSimpleQuery(sub1),self.processSimpleQuery(sub2))
                     
                     if(parsed[ind-1]=='OR'):
-                        return str(self.OR_Processor(self.processSimpleQuery(sub1),self.processSimpleQuery(sub2)))
+                        return self.OR_Processor(self.processSimpleQuery(sub1),self.processSimpleQuery(sub2))
                     
                 elif ind==0 and parsed.index(')')!=len(parsed)-1: # Query Of TYpe (hillary OR obama) AND Trump
                     sub1 = parsed[ind+1:ind2]
                     sub2 = parsed[ind2+2:]
                     if(parsed[ind2+1]=='AND'):
-                        return str(self.AND_Processor(self.processSimpleQuery(sub1),self.processSimpleQuery(sub2)))
+                        return self.AND_Processor(self.processSimpleQuery(sub1),self.processSimpleQuery(sub2))
                     
                     if(parsed[ind2+1]=='OR'):
-                        return str(self.OR_Processor(self.processSimpleQuery(sub1),self.processSimpleQuery(sub2)))
+                        return self.OR_Processor(self.processSimpleQuery(sub1),self.processSimpleQuery(sub2))
                     
                 else:                           #Query Of Type          obama AND (Hillary AND Clinton) OR trump
                     sub1 = parsed[:ind-1]
@@ -507,13 +511,13 @@ class Ui_MainWindow(object):
                     sub3 = parsed[ind2+2:]
 
                     if(parsed[ind-1]=='AND' and parsed[ind2+1]=='AND'):
-                        return str(self.AND_Processor(self.processSimpleQuery(sub1),self.AND_Processor(self.processSimpleQuery(sub2),self.processSimpleQuery(sub3))))
+                        return self.AND_Processor(self.processSimpleQuery(sub1),self.AND_Processor(self.processSimpleQuery(sub2),self.processSimpleQuery(sub3)))
                     if(parsed[ind-1]=='OR' and parsed[ind2+1]=='OR'):
-                        return str(OR_Processor(self.processSimpleQuery(sub1),self.OR_Processor(self.processSimpleQuery(sub2),self.processSimpleQuery(sub3))))
+                        return OR_Processor(self.processSimpleQuery(sub1),self.OR_Processor(self.processSimpleQuery(sub2),self.processSimpleQuery(sub3)))
                     if(parsed[ind-1]=='AND' and parsed[ind2+1]=='OR'):
-                        return str(self.AND_Processor(self.processSimpleQuery(sub1),self.OR_Processor(self.processSimpleQuery(sub2),self.processSimpleQuery(sub3))))
+                        return self.AND_Processor(self.processSimpleQuery(sub1),self.OR_Processor(self.processSimpleQuery(sub2),self.processSimpleQuery(sub3)))
                     if(parsed[ind-1]=='OR' and parsed[ind2+1]=='AND'):
-                        return str(self.OR_Processor(self.processSimpleQuery(sub1),self.AND_Processor(self.processSimpleQuery(sub2),self.processSimpleQuery(sub3))))
+                        return self.OR_Processor(self.processSimpleQuery(sub1),self.AND_Processor(self.processSimpleQuery(sub2),self.processSimpleQuery(sub3)))
 
 
 
@@ -565,7 +569,9 @@ class Ui_MainWindow(object):
                         op.append(parsed[i+1])  #get operation on word 
                     counter2.append(i)  #Word Matched in dictioinary confirmation
                 except:
-                    return str(parsed[i])+ " Not Found In Dictionary"
+                    Plist.append('')
+                    counter2.append(i)
+                    #return str(parsed[i])+ " Not Found In Dictionary"
                     
         for i in range(len(counter2)-1,-1,-1):
             parsed.pop(counter2[i])
